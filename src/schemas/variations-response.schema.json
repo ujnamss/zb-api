@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://0bugz.com/static/variations-response.schema.json",
+  "title": "VariationsResponse",
+  "description": "Models a response to the variations generation request",
+  "type": "object",
+  "properties": {
+    "count": {
+      "description": "Number of variations that were generated",
+      "type": "integer",
+      "default": 100
+    },
+    "results": {
+      "description": "Each result is a variation that is modelled after the variations generation request",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "items": {
+          "type": "object"
+        },
+        "minItems": 1,
+      },
+      "minItems": 1,
+    },
+    "required": [ "results", "count" ]
+}

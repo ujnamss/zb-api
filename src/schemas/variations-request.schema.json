@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "http://0bugz.com:20001/static/variations-request.schema.json",
+  "title": "VariationsRequest",
+  "description": "Models a request via Meta information describing how the variations needs to be generated",
+  "definitions": {
+    "entity-attribute": {
+      "type": "object",
+      "properties": {
+        "sequence_number": {
+          "description": "Specify the sequence number of the attribute",
+          "type": "integer"
+        },
+        "attribute_name": {
+          "description": "Name of the attribute",
+          "type": "string"
+        },
+        "attribute_type": {
+          "description": "One of the types like - string, integer, date, country_code, country_state, tweet etc",
+          "type": "string",
+          "enum": ["char", "string", "integer", "float", "date", "country_code", "country_state", "tweet"]
+        },
+        "attribute_value_dist": {
+          "description": "Specify a distribution of variations to be generated, examples could be random, gaussian etc",
+          "type": "string",
+          "enum": ["random", "guassian"],
+          "default": "random"
+        },
+        "attribute_nullable": {
+          "description": "Specifies if this attribute can be null in generated entity",
+          "enum": [true, false],
+          "default": true
+        },
+        "attribute_values": {
+          "description": "Specify the pool of values to pick from",
+          "type": "object",
+          "properties": {
+            "range": {
+              "enum": ["custom", "standard"],
+              "default": "custom"
+            },
+            "values": {
+              "type": "array"
+            },
+            "sequence": {
+              "description": "Specify the sequence of values to pick from",
+              "type": "object",
+              "properties": {
+                "start": {
+                  "type": "string"
+                },
+                "end": {
+                  "type": "string"
+                },
+                "increment": {
+                  "type": "object",
+                  "properties": {
+                    "unit": {
+                      "type": "string"
+                    },
+                    "step_size": {
+                      "type": ["integer", "number"]
+                    }
+                  },
+                  "required": [ "unit", "step_size" ]
+                }
+              },
+              "required": [ "start", "end", "increment" ]
+            }
+          }
+        }
+      },
+      "required": [ "sequence_number", "attribute_name", "attribute_type", "attribute_values" ]
+    },
+
+    "entity": {
+      "type": "object",
+      "properties": {
+        "entity_name": "string",
+        "entity_type": "string",
+        "attributes": {
+          "description": "Each attribute of the entity",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/entity-attribute"
+          },
+          "minItems": 1
+        }
+      }
+    }
+
+  },
+  "type": "object",
+  "properties": {
+    "entity": {
+      "description": "Entity provides the specification of the output to be generated",
+      "$ref": "#/definitions/entity"
+    }
+  },
+  "required": [ "entity" ]
+}

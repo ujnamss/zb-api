@@ -1,0 +1,61 @@
+{
+    "entity": {
+        "entity_name": "test",
+        "entity_type": "custom",
+        "attributes": [
+            {
+                "sequence_number": 1,
+                "attribute_name": "col1",
+                "attribute_type": "float",
+                "attribute_values": {
+                    "range": "custom",
+                    "values": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+                }
+            }, {
+                "sequence_number": 2,
+                "attribute_name": "col2",
+                "attribute_type": "char",
+                "attribute_values": {
+                    "range": "standard"
+                }
+            }, {
+                "sequence_number": 3,
+                "attribute_name": "col3",
+                "attribute_type": "string",
+                "attribute_values": {
+                    "range": "standard"
+                }
+            }, {
+                "sequence_number": 4,
+                "attribute_name": "col4",
+                "attribute_type": "date",
+                "attribute_values": {
+                    "range": "custom",
+                    "sequence": {
+                      "start": "2018-01-25",
+                      "end": "2018-11-26",
+                      "increment": {
+                        "unit": "days",
+                        "step_size": 1
+                      }
+                    }
+                }
+            }, {
+                "sequence_number": 5,
+                "attribute_name": "col5",
+                "attribute_type": "float",
+                "attribute_values": {
+                    "range": "custom",
+                    "sequence": {
+                      "start": "1",
+                      "end": "50",
+                      "increment": {
+                        "unit": "value",
+                        "step_size": 0.5
+                      }
+                    }
+                }
+            }
+        ]
+    }
+}

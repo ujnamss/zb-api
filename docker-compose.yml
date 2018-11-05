@@ -1,0 +1,31 @@
+version: '3'
+services:
+  zb_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 20002
+    volumes:
+      - ${HOME_DIR}:/homedir
+      - ${DATA_DIR}:/data
+    networks:
+     - zb_net
+    restart: always
+
+  zb_api_redis:
+    image: "redis:alpine"
+    command: redis-server --appendonly yes
+    volumes:
+      - vol_zb_api_redis:/data
+    networks:
+     - zb_net
+    restart: always
+
+networks:
+  zb_net:
+    external: true
+
+volumes:
+  vol_zb_api_redis:
+    external: true

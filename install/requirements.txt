@@ -1,0 +1,8 @@
+Flask
+eventlet==0.22.1
+python-dateutil
+requests
+fastjsonschema
+parameterized
+zb-common==0.0.5
+redis

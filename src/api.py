@@ -10,13 +10,14 @@ from flask import render_template
 from flask import send_from_directory
 from zb_common import Util
 from auth import AuthKeyGenerator
-from cache import ReverseAuthKeyCache, AuthKeyCache
+from cache import ReverseAuthKeyCache, AuthKeyCache, TagCache
 from pathlib import Path
 
 util = Util("../config/test.cfg")
 auth_key_gen = AuthKeyGenerator()
 auth_key_cache = AuthKeyCache(util)
 reverse_auth_key_cache = ReverseAuthKeyCache(util)
+tag_cache = TagCache(util)
 json_only_http_headers = {
     'Content-type': "application/json"
 }
@@ -47,6 +48,45 @@ def generate_auth_key():
         'auth_key': auth_key
     }
     return json.dumps(resp), 200
+
+@app.route("/tags", methods=['POST'])
+def set_tags_for_request_id():
+    print("set_tags_for_request_id: invoked")
+    auth_key = request.headers.get('Authorization', None)
+    if auth_key == None:
+        resp = {
+            "status": "failure",
+            "message": "Please specify your auth_key in the Authorization header"
+        }
+        return json.dumps(resp), 401
+    user_id = reverse_auth_key_cache.get_user_id(auth_key)
+    print("variations api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
+
+    request.get_data()
+    request_id = request.json.get("request_id")
+    tags = request.json.get("tags")
+
+    resp = {
+        'status': "success",
+        'result': "tags was set successfully"
+    }
+    http_status_code = 200
+
+    file_path = "/data/{}".format(request_id)
+    req_file = Path(file_path)
+    if not req_file.exists():
+        resp['status'] = "failure"
+        resp["result"] = "invalid request_id"
+        http_status_code = 404
+    else:
+        try:
+            tag_cache.cache(request_id, tags)
+        except Exception as e:
+            print("Exception occured: {}".format(e))
+            http_status_code = 500
+            resp = {'status':'failure', 'result': "Setting tags failed"}
+
+    return json.dumps(resp), http_status_code
 
 @app.route("/expectedvalue", methods=['POST'])
 def set_expected_value():
@@ -118,12 +158,19 @@ def get_variations():
     print("get_variations api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
 
     request_id = request.args.get("request_id", None)
-    if request_id == None:
+    tag = request.args.get("tag", None)
+
+    if request_id == None and tag == None:
         resp = {
             "status": "failure",
-            "message": "Please specify a request_id as query parameter"
+            "message": "Please specify either a request_id or tag as query parameter"
         }
         return json.dumps(resp), 400
+
+    if request_id == None:
+        print("Getting request_id from tag: {}".format(tag))
+        request_id = tag_cache.get_request_id(tag)
+        print("Got request_id: {} from tag cache".format(request_id))
 
     resp = {
         "status": "success",
@@ -132,6 +179,7 @@ def get_variations():
     http_status_code = 200
     try:
         file_path = "/data/{}".format(request_id)
+        print("file_path: {}".format(file_path))
         req_file = Path(file_path)
         if not req_file.exists():
             resp['status'] = "failure"

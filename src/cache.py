@@ -10,6 +10,18 @@ class Cache:
         }
         self.redisClient = redis.StrictRedis(**kwargs)
 
+class TagCache(Cache):
+
+    def __init__(self, util):
+        super().__init__(util)
+
+    def cache(self, request_id, tags):
+        for tag in tags:
+            self.redisClient.set(tag, request_id)
+
+    def get_request_id(self, tag):
+        return self.redisClient.get(tag).decode("utf-8")
+
 class ReverseAuthKeyCache(Cache):
 
     def __init__(self, util):

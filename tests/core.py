@@ -17,6 +17,7 @@ srcPath = util.get_env_value("src_path", "src")
 p = os.path.abspath(srcPath)
 sys.path.insert(0, p)
 
+# os.environ["server_base_url"] = "https://0bugz.com/api"
 serverBaseUrl = util.get_env_value("base_url", "server")
 variationsAPIUrl = "{}/variations".format(serverBaseUrl)
 authkeyAPIUrl = "{}/authkey".format(serverBaseUrl)
@@ -26,7 +27,7 @@ headers = {
 os.environ["ZB_SERVER_BASE_URL"] = serverBaseUrl
 
 from parameterized import parameterized
-from zerobugz import load_test_cases, set_expected_value
+from zerobugz import load_test_cases, set_expected_value, get_zb_request_id, get_variations
 
 payload = {
     'user_id': 'ujnamss'
@@ -39,14 +40,23 @@ class SDGCoreTests(unittest.TestCase):
 
     @parameterized.expand(load_test_cases('custom_entity_float_val.json', count=5))
     def test_getFloatCustomValVariations(self, variation):
-        # request_id = zb.get_request_id()
-        # item_id = zb.get_item_id()
+        request_id = get_zb_request_id()
+        print("request_id: {}".format(request_id))
         print(variation)
         print(os.environ["ZB_API_KEY"])
-        col1 = float(variation.get("col1", "0.1"))
-        assert(col1 >= 0.1 and col1 <= 1.0)
-        # set_expected_value(request_id, item_id, col1 * col1)
-        set_expected_value("0674db953f2146b2acbcf8e6cd3e8157", 0, col1 * col1)
+        col1 = variation.get("col1", None)
+        if col1:
+            col1 = float(col1)
+            assert(col1 >= 0.1 and col1 <= 1.0)
+            set_expected_value(request_id, variation.get("item_id"), col1 * col1)
+
+
+    def test_direct_api(self):
+        gen_variations = load_test_cases('custom_entity_float_val.json', count=5)
+        request_id = get_zb_request_id()
+        print("request_id: {}".format(request_id))
+        fetched_variations = get_variations(request_id)
+        assert(len(gen_variations) == len(fetched_variations))
 
     # @parameterized.expand(load_test_cases('custom_entity_float_seq.json', count=50))
     # def test_getFloatCustomSeqVariations(self, variation):

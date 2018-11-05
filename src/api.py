@@ -104,6 +104,53 @@ def set_expected_value():
 
     return json.dumps(resp), http_status_code
 
+@app.route("/variations", methods=['GET'])
+def get_variations():
+    print("------------------------------ new request: get_variations invoked -----------------------------")
+    auth_key = request.headers.get('Authorization', None)
+    if auth_key == None:
+        resp = {
+            "status": "failure",
+            "message": "Please specify your auth_key in the Authorization header"
+        }
+        return json.dumps(resp), 401
+    user_id = reverse_auth_key_cache.get_user_id(auth_key)
+    print("get_variations api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
+
+    request_id = request.args.get("request_id", None)
+    if request_id == None:
+        resp = {
+            "status": "failure",
+            "message": "Please specify a request_id as query parameter"
+        }
+        return json.dumps(resp), 400
+
+    resp = {
+        "status": "success",
+        "message": "Fetched variations successfully"
+    }
+    http_status_code = 200
+    try:
+        file_path = "/data/{}".format(request_id)
+        req_file = Path(file_path)
+        if not req_file.exists():
+            resp['status'] = "failure"
+            resp["result"] = "invalid request_id"
+            http_status_code = 404
+        else:
+            variations = None
+            with open(file_path, "r") as f:
+                variations = json.load(f)
+            resp['result'] = variations
+            resp['request_id'] = request_id
+        print("resp: {}".format(resp))
+    except Exception as e:
+        print("Exception occured: {}".format(e))
+        http_status_code = 500
+        resp = {'status':'failure', 'result': "Error fetching variations"}
+    finally:
+        return json.dumps(resp), http_status_code
+
 @app.route("/variations", methods=['POST'])
 def variations():
     print("------------------------------ new request: variations invoked -----------------------------")
@@ -128,15 +175,16 @@ def variations():
         #     f.write(code)
         variations_request_schema = fastjsonschema.compile(variations_request_schema_str)
 
-    request.get_data()
-    format = request.args.get("format", "json")
-    high = int(request.args.get("count", "100"))
-    payload = request.json
-    print("fetched payload: {}".format(payload))
     resp = {}
     http_status_code = 200
-    variations_core_API_url = "{}/{}?format={}&count={}".format(zb_core_API_url, "variations", format, high)
     try:
+        request.get_data()
+        format = request.args.get("format", "json")
+        high = int(request.args.get("count", "100"))
+        payload = request.json
+        print("fetched payload: {}".format(payload))
+        variations_core_API_url = "{}/{}?format={}&count={}".format(zb_core_API_url, "variations", format, high)
+
         r1 = variations_request_schema(payload)
         print("validation succeeded")
         vc_resp = requests.post(variations_core_API_url, headers=json_only_http_headers, data=json.dumps(payload))

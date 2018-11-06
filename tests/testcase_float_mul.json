@@ -1,0 +1,39 @@
+{
+    "entity": {
+        "entity_name": "test",
+        "entity_type": "custom",
+        "attributes": [
+            {
+                "sequence_number": 1,
+                "attribute_name": "col1",
+                "attribute_type": "float",
+                "attribute_nullable": false,
+                "attribute_values": {
+                    "range": "custom",
+                    "values": [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+                }
+            }, {
+                "sequence_number": 2,
+                "attribute_name": "col2",
+                "attribute_type": "char",
+                "attribute_nullable": false,
+                "attribute_values": {
+                    "range": "standard"
+                }
+            }
+        ],
+        "expected_value_func": {
+          "lang": "python",
+          "name": "ev_square",
+          "code": [
+              "",
+              "import requests",
+              "",
+              "def ev_square(entity):",
+              " return {",
+              "   'result': entity['col1'] * entity['col1']",
+              " }"
+            ]
+        }
+    }
+}

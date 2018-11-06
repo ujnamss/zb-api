@@ -1,0 +1,47 @@
+{
+    "entity": {
+        "entity_name": "test_docsend_passwd",
+        "entity_type": "custom",
+        "attributes": [
+            {
+                "sequence_number": 1,
+                "attribute_name": "preceeding_phrase",
+                "attribute_type": "string",
+                "attribute_nullable": false,
+                "attribute_values": {
+                    "range": "custom",
+                    "values": ["password", "Password", "passcode", "Passcode", "access code"]
+                }
+            }, {
+                "sequence_number": 2,
+                "attribute_name": "separator",
+                "attribute_type": "string",
+                "attribute_nullable": false,
+                "attribute_values": {
+                    "range": "custom",
+                    "values": [":", " is ", ""]
+                }
+            }, {
+                "sequence_number": 3,
+                "attribute_name": "password",
+                "attribute_type": "string",
+                "attribute_nullable": false,
+                "attribute_values": {
+                    "range": "custom",
+                    "values": ["mortgage", "hello123", "'hello123'", "\"hello123\"", "cryptoking123", "pitch", "'pitch'"]
+                }
+            }
+        ],
+        "expected_value_func": {
+          "lang": "python",
+          "name": "ev_extract_passwd",
+          "code": [
+              "",
+              "def ev_extract_passwd(entity):",
+              " return {",
+              "   'result': entity['password']",
+              " }"
+            ]
+        }
+    }
+}

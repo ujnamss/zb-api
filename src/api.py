@@ -27,6 +27,9 @@ app = Flask(__name__, static_url_path='')
 
 variations_request_schema = None
 
+def test():
+    print("hello")
+
 @app.route('/static/<path:path>')
 def send_schema(path):
     print("send_schema: path: {}".format(path))
@@ -60,7 +63,7 @@ def set_tags_for_request_id():
         }
         return json.dumps(resp), 401
     user_id = reverse_auth_key_cache.get_user_id(auth_key)
-    print("variations api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
+    print("set_tags_for_request_id api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
 
     request.get_data()
     request_id = request.json.get("request_id")
@@ -99,7 +102,7 @@ def set_expected_value():
         }
         return json.dumps(resp), 401
     user_id = reverse_auth_key_cache.get_user_id(auth_key)
-    print("variations api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
+    print("set_expected_value api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
 
     request.get_data()
     request_id = request.json.get("request_id")
@@ -196,6 +199,70 @@ def get_variations():
         print("Exception occured: {}".format(e))
         http_status_code = 500
         resp = {'status':'failure', 'result': "Error fetching variations"}
+    finally:
+        return json.dumps(resp), http_status_code
+
+@app.route("/testcases", methods=['POST'])
+def testcases():
+    print("------------------------------ new request: variations invoked -----------------------------")
+    auth_key = request.headers.get('Authorization', None)
+    if auth_key == None:
+        resp = {
+            "status": "failure",
+            "message": "Please specify your auth_key in the Authorization header"
+        }
+        return json.dumps(resp), 401
+    user_id = reverse_auth_key_cache.get_user_id(auth_key)
+    print("testcases api invoked with auth_key: {} for user_id: {}".format(auth_key, user_id))
+
+    global variations_request_schema
+    if not variations_request_schema:
+        variations_request_schema_str = ""
+        with open('schemas/testcases-request.schema.json', 'r') as f:
+            variations_request_schema_str = json.load(f)
+        # print(variations_request_schema_str)
+        # code = fastjsonschema.compile_to_code(variations_request_schema_str)
+        # with open('jsonvalidator.py', 'w') as f:
+        #     f.write(code)
+        variations_request_schema = fastjsonschema.compile(variations_request_schema_str)
+
+    resp = {}
+    http_status_code = 200
+    try:
+        request.get_data()
+        format = request.args.get("format", "json")
+        high = int(request.args.get("count", "100"))
+        payload = request.json
+        print("fetched payload: {}".format(payload))
+        variations_core_API_url = "{}/{}?format={}&count={}".format(zb_core_API_url, "variations", format, high)
+
+        r1 = variations_request_schema(payload)
+        print("validation succeeded")
+        vc_resp = requests.post(variations_core_API_url, headers=json_only_http_headers, data=json.dumps(payload))
+        vc_resp = vc_resp.json()
+        request_id = util.get_random_id_32()
+        items = []
+        for idx, item in enumerate(vc_resp['result']):
+            item['item_id'] = idx
+            items.append(item)
+        resp = {
+            'status': vc_resp['status'],
+            'result': items,
+            'request_id': request_id
+        }
+        file_path = "/data/{}".format(request_id)
+        with open(file_path, "w+") as f:
+            f.write(json.dumps(items))
+            f.write("\n")
+        print("resp: {}".format(resp))
+    except JsonSchemaException as e:
+        print("Exception occured: {}".format(e))
+        http_status_code = 500
+        resp = {'status':'failure', 'result': str(e)}
+    except Exception as e:
+        print("Exception occured: {}".format(e))
+        http_status_code = 500
+        resp = {'status':'failure', 'result': "Data generation failed"}
     finally:
         return json.dumps(resp), http_status_code
 
